@@ -37,7 +37,7 @@
 static struct hash *lcomhash;
 
 /* Allocate a new lcommunities.  */
-static struct lcommunity *lcommunity_new(void)
+struct lcommunity *lcommunity_new(void)
 {
 	return XCALLOC(MTYPE_LCOMMUNITY, sizeof(struct lcommunity));
 }
@@ -55,6 +55,16 @@ void lcommunity_free(struct lcommunity **lcom)
 	XFREE(MTYPE_LCOMMUNITY, *lcom);
 }
 
+struct lcommunity_val *lcommunity_val_new(void)
+{
+	return XCALLOC(MTYPE_LCOMMUNITY_VAL, sizeof(struct lcommunity_val));
+}
+
+void lcommunity_val_free(struct lcommunity_val *val)
+{
+	XFREE(MTYPE_LCOMMUNITY_VAL, val);
+}
+
 static void lcommunity_hash_free(struct lcommunity *lcom)
 {
 	lcommunity_free(&lcom);
@@ -65,7 +75,7 @@ static void lcommunity_hash_free(struct lcommunity *lcom)
    structure, we don't add the value.  Newly added value is sorted by
    numerical order.  When the value is added to the structure return 1
    else return 0.  */
-static bool lcommunity_add_val(struct lcommunity *lcom,
+bool lcommunity_add_val(struct lcommunity *lcom,
 			       struct lcommunity_val *lval)
 {
 	uint8_t *p;
@@ -526,6 +536,28 @@ void lcommunity_del_val(struct lcommunity *lcom, uint8_t *ptr)
 		}
 		i++;
 	}
+}
+
+/* Returns a copy of the first lcommunity value that matches the given prefix. */
+struct lcommunity_val *lcommunity_search_val(struct lcommunity *lcom, uint8_t *prefix, size_t prefix_size)
+{
+	int i = 0;
+
+	if (!lcom->val) {
+		return NULL;
+	}
+
+	while (i < lcom->size) {
+		if (memcmp(lcom->val + i * LCOMMUNITY_SIZE, prefix,
+			prefix_size) == 0) {
+				struct lcommunity_val *val = XMALLOC(MTYPE_LCOMMUNITY_VAL, sizeof(struct lcommunity_val));
+				memcpy(val, lcom->val + i * LCOMMUNITY_SIZE, LCOMMUNITY_SIZE);
+				return val;
+		}
+		i++;
+	}
+
+	return NULL;
 }
 
 static struct lcommunity *bgp_aggr_lcommunity_lookup(

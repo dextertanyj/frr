@@ -831,6 +831,9 @@ struct bgp {
 
 	bool allow_martian;
 
+	struct service_constraint_settings *service_constraint_settings;
+	struct service_constraints *service_constraints;
+
 	/* BGP optimal route reflection group and Root Router configuration */
 	uint32_t orr_group_count;
 	struct list *orr_group[AFI_MAX][SAFI_MAX];
@@ -1805,6 +1808,8 @@ struct peer {
 	struct llgr_info llgr[AFI_MAX][SAFI_MAX];
 
 	bool shut_during_cfg;
+
+	struct service_constraints *service_constraints;
 
 	QOBJ_FIELDS;
 };

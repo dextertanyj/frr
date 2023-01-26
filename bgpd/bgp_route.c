@@ -75,6 +75,7 @@
 #include "bgpd/bgp_orr.h"
 #include "bgpd/bgp_trace.h"
 #include "bgpd/bgp_rpki.h"
+#include "bgpd/bgp_svc_constraint.h"
 
 #ifdef ENABLE_BGP_VNC
 #include "bgpd/rfapi/rfapi_backend.h"
@@ -983,6 +984,25 @@ static int bgp_path_info_cmp(struct bgp *bgp, struct bgp_path_info *new,
 	exist = bgp_get_imported_bpi_ultimate(exist);
 	newattr = new->attr;
 	existattr = exist->attr;
+
+	/* 3.5. Service constraint check. */
+	int constraint_comparison = bgp_compare_service_constraints(bgp->service_constraint_settings, &(existattr->lcommunity), &(newattr->lcommunity));
+	if (constraint_comparison < 0) {
+		*reason = bgp_path_selection_svc_constraint;
+		if (debug)
+			zlog_debug(
+				"%s: %s wins over %s due to preferred service constraints",
+				pfx_buf, new_buf, exist_buf);
+		return 1;
+	}
+	if (constraint_comparison > 0) {
+		*reason = bgp_path_selection_svc_constraint;
+		if (debug)
+			zlog_debug(
+				"%s: %s wins over %s due to preferred service constraints",
+				pfx_buf, exist_buf, new_buf);
+		return 0;
+	}
 
 	/* 4. AS path length check. */
 	if (!CHECK_FLAG(bgp->flags, BGP_FLAG_ASPATH_IGNORE)) {
@@ -4207,6 +4227,10 @@ int bgp_update(struct peer *peer, const struct prefix *p, uint32_t addpath_id,
 		goto filtered;
 	}
 
+	if (bgp_apply_service_constraints(&(new_attr.lcommunity), peer->service_constraints)) {
+		bgp_attr_set_lcommunity(&new_attr, NULL);
+	}
+
 	if (pi && pi->attr->rmap_table_id != new_attr.rmap_table_id) {
 		if (CHECK_FLAG(pi->flags, BGP_PATH_SELECTED))
 			/* remove from RIB previous entry */
@@ -6171,6 +6195,10 @@ void bgp_static_update(struct bgp *bgp, const struct prefix *p,
 	attr.nexthop = bgp_static->igpnexthop;
 	attr.med = bgp_static->igpmetric;
 	attr.flag |= ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC);
+
+	if (bgp->service_constraints) {
+		bgp_apply_service_constraints(&attr.lcommunity, bgp->service_constraints);
+	}
 
 	if (afi == AFI_IP)
 		attr.mp_nexthop_len = BGP_ATTR_NHLEN_IPV4;
@@ -8991,6 +9019,8 @@ const char *bgp_path_selection_reason2str(enum bgp_path_selection_reason reason)
 		return "Local Route";
 	case bgp_path_selection_aigp:
 		return "AIGP";
+	case bgp_path_selection_svc_constraint:
+		return "Service constraint";
 	case bgp_path_selection_confed_as_path:
 		return "Confederation based AS Path";
 	case bgp_path_selection_as_path:

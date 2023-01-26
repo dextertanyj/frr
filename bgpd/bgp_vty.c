@@ -79,6 +79,7 @@
 #include "bgpd/rfapi/bgp_rfapi_cfg.h"
 #endif
 #include "bgpd/bgp_orr.h"
+#include "bgpd/bgp_svc_constraint.h"
 
 
 FRR_CFG_DEFAULT_BOOL(BGP_IMPORT_CHECK,
@@ -4606,6 +4607,99 @@ DEFUN (neighbor_remote_as,
 	int idx_remote_as = 3;
 	return peer_remote_as_vty(vty, argv[idx_peer]->arg,
 				  argv[idx_remote_as]->arg);
+}
+
+DEFUN (bgp_set_service_constraint_comparison_algorithm,
+	   bgp_set_service_constraint_comparison_algorithm_cmd,
+	   "bgp service-constraint-algorithm <all|common|count>",
+	   BGP_STR
+	   "Set service constraint comparison algorithm for best path selection\n"
+	   "Compare routes based on weighted sum of all possible services\n"
+	   "Compare routes based on weighted sum of intersecting set of defined services\n"
+	   "Compare routes based on greatest number of defined services\n")
+{
+	int idx_algorithm = 2;
+	VTY_DECLVAR_CONTEXT(bgp, bgp);
+
+	enum comparison_algorithm algorithm = bgp_parse_service_constraint_comparison_algorithm(argv[idx_algorithm]->arg);
+	if (algorithm < 0) {
+		return CMD_WARNING_CONFIG_FAILED;
+	}
+	bgp_configure_service_comparison_algorithm(bgp, algorithm);
+	return CMD_SUCCESS;
+}
+
+DEFUN (bgp_set_service_constraint_weight,
+	   bgp_set_service_constraint_weight_cmd,
+	   "bgp service-constraint-weight <bandwidth|latency> (1-4294967295)",
+	   BGP_STR
+	   "Set service constraint weights for best path selection\n"
+	   "Bandwidth service type\nLatency service type\n"
+	   "Service constraint weight\n")
+{
+	int idx_type = 2;
+	int idx_weight = 3;
+	VTY_DECLVAR_CONTEXT(bgp, bgp);
+
+	enum constraint_type type = bgp_parse_service_constraint_type(argv[idx_type]->arg);
+	if (type == BGP_SVC_CONSTRAINT_BASE || type == BGP_SVC_CONSTRAINT_NONE) {
+		return CMD_WARNING_CONFIG_FAILED;
+	}
+	uint32_t weight = strtoul(argv[idx_weight]->arg, NULL, 0);
+
+	bgp_configure_service_constraint_weights(bgp, type, weight);
+	return CMD_SUCCESS;
+}
+
+DEFUN (bgp_set_service_constraint,
+	   bgp_set_service_constraint_cmd,
+	   "bgp service-constraint <bandwidth|latency> (1-4294967295)",
+	   BGP_STR
+	   "Set service constraint for local originating routes\n"
+	   "Bandwidth service type\nLatency service type\n"
+	   "Service constraint value\n")
+{
+	int idx_type = 2;
+	int idx_value = 3;
+	VTY_DECLVAR_CONTEXT(bgp, bgp);
+
+	enum constraint_type type = bgp_parse_service_constraint_type(argv[idx_type]->arg);
+	if (type == BGP_SVC_CONSTRAINT_BASE || type == BGP_SVC_CONSTRAINT_NONE) {
+		return CMD_WARNING_CONFIG_FAILED;
+	}
+	uint32_t value = strtoul(argv[idx_value]->arg, NULL, 0);
+
+	bgp_configure_service_constraints(bgp, type, value);
+	return CMD_SUCCESS;
+}
+
+DEFUN (neighbor_set_service_constraint,
+       neighbor_set_service_constraint_cmd,
+       "neighbor <A.B.C.D|X:X::X:X|WORD> service-constraint <bandwidth|latency> (1-4294967295)",
+       NEIGHBOR_STR
+	   NEIGHBOR_ADDR_STR2
+	   "Set service constraint for peering session\n"
+	   "Bandwidth service type\nLatency service type\n"
+	   "Service constraint value\n")
+{
+	int idx_peer = 1;
+	int idx_type = 3;
+	int idx_value = 4;
+	struct peer *peer;
+
+	peer = peer_lookup_vty(vty, argv[idx_peer]->arg);
+	if (!peer) {
+		return CMD_WARNING_CONFIG_FAILED;
+	}
+
+	enum constraint_type type = bgp_parse_service_constraint_type(argv[idx_type]->arg);
+	if (type == BGP_SVC_CONSTRAINT_BASE || type == BGP_SVC_CONSTRAINT_NONE) {
+		return CMD_WARNING_CONFIG_FAILED;
+	}
+	uint32_t value = strtoul(argv[idx_value]->arg, NULL, 0);
+
+	peer_configure_service_constraints(peer, type, value);
+	return CMD_SUCCESS;
 }
 
 DEFPY (bgp_allow_martian,
@@ -20084,6 +20178,11 @@ void bgp_vty_init(void)
 	install_element(BGP_IPV6_NODE, &af_sid_vpn_export_cmd);
 	install_element(BGP_NODE, &bgp_sid_vpn_export_cmd);
 	install_element(BGP_NODE, &no_bgp_sid_vpn_export_cmd);
+
+	install_element(BGP_NODE, &bgp_set_service_constraint_comparison_algorithm_cmd);
+	install_element(BGP_NODE, &bgp_set_service_constraint_weight_cmd);
+	install_element(BGP_NODE, &bgp_set_service_constraint_cmd);
+	install_element(BGP_NODE, &neighbor_set_service_constraint_cmd);
 
 	bgp_vty_if_init();
 }

@@ -55,6 +55,8 @@ struct lcommunity_val {
 
 extern void lcommunity_init(void);
 extern void lcommunity_finish(void);
+
+extern struct lcommunity *lcommunity_new(void);
 extern void lcommunity_free(struct lcommunity **);
 extern struct lcommunity *lcommunity_parse(uint8_t *, unsigned short);
 extern struct lcommunity *lcommunity_dup(struct lcommunity *);
@@ -72,7 +74,12 @@ extern bool lcommunity_match(const struct lcommunity *,
 extern char *lcommunity_str(struct lcommunity *, bool make_json,
 			    bool translate_alias);
 extern bool lcommunity_include(struct lcommunity *lcom, uint8_t *ptr);
+extern bool lcommunity_add_val(struct lcommunity *lcom, struct lcommunity_val *lval);
 extern void lcommunity_del_val(struct lcommunity *lcom, uint8_t *ptr);
+extern struct lcommunity_val *lcommunity_search_val(struct lcommunity *lcom, uint8_t *prefix, size_t prefix_size);
+
+extern struct lcommunity_val *lcommunity_val_new(void);
+extern void lcommunity_val_free(struct lcommunity_val *);
 
 extern void bgp_compute_aggregate_lcommunity(
 					struct bgp_aggregate *aggregate,

@@ -93,6 +93,7 @@
 #include "bgpd/bgp_evpn_mh.h"
 #include "bgpd/bgp_mac.h"
 #include "bgpd/bgp_orr.h"
+#include "bgpd/bgp_svc_constraint.h"
 
 DEFINE_MTYPE_STATIC(BGPD, PEER_TX_SHUTDOWN_MSG, "Peer shutdown message (TX)");
 DEFINE_MTYPE_STATIC(BGPD, BGP_EVPN_INFO, "BGP EVPN instance information");
@@ -1804,6 +1805,8 @@ struct peer *peer_create(union sockunion *su, const char *conf_if,
 	bgp_peer_gr_flags_update(peer);
 	BGP_GR_ROUTER_DETECT_AND_SEND_CAPABILITY_TO_ZEBRA(bgp, bgp->peer);
 
+	peer->service_constraints = NULL;
+
 	return peer;
 }
 
@@ -2576,6 +2579,10 @@ int peer_delete(struct peer *peer)
 	XFREE(MTYPE_BGP_PEER_HOST, peer->hostname);
 	XFREE(MTYPE_BGP_PEER_HOST, peer->domainname);
 
+	if (peer->service_constraints) {
+		XFREE(MTYPE_SERVICE_CONSTRAINTS, peer->service_constraints);
+	}
+
 	peer_unlock(peer); /* initial reference */
 
 	return 0;
@@ -3286,6 +3293,9 @@ static struct bgp *bgp_create(as_t *as, const char *name,
 	bgp->coalesce_time = BGP_DEFAULT_SUBGROUP_COALESCE_TIME;
 	bgp->default_af[AFI_IP][SAFI_UNICAST] = true;
 
+	bgp->service_constraint_settings = bgp_service_constraint_settings_init();
+	bgp->service_constraints = NULL;
+
 	QOBJ_REG(bgp, bgp);
 
 	update_bgp_group_init(bgp);
@@ -3788,6 +3798,12 @@ int bgp_delete(struct bgp *bgp)
 			bgp_set_evpn(NULL);
 		else
 			bgp_set_evpn(bgp_get_default());
+	}
+
+	XFREE(MTYPE_SERVICE_CONSTRAINTS, bgp->service_constraint_settings);
+
+	if (bgp->service_constraints) {
+		XFREE(MTYPE_SERVICE_CONSTRAINTS, bgp->service_constraints);
 	}
 
 	if (bgp->process_queue)
