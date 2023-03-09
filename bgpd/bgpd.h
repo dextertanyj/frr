@@ -831,8 +831,8 @@ struct bgp {
 
 	bool allow_martian;
 
-	struct service_constraint_settings *service_constraint_settings;
-	struct service_constraints *service_constraints;
+	struct service_parameter_settings *service_parameter_settings;
+	struct service_parameters *service_parameters;
 
 	/* BGP optimal route reflection group and Root Router configuration */
 	uint32_t orr_group_count;
@@ -1809,7 +1809,7 @@ struct peer {
 
 	bool shut_during_cfg;
 
-	struct service_constraints *service_constraints;
+	struct service_parameters *service_parameters;
 
 	QOBJ_FIELDS;
 };

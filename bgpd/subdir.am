@@ -61,7 +61,7 @@ bgpd_libbgp_a_SOURCES = \
 	bgpd/bgp_open.c \
 	bgpd/bgp_packet.c \
 	bgpd/bgp_pbr.c \
-	bgpd/bgp_svc_constraint.c \
+	bgpd/bgp_svc_parameter.c \
 	bgpd/bgp_rd.c \
 	bgpd/bgp_regex.c \
 	bgpd/bgp_route.c \
@@ -146,7 +146,7 @@ noinst_HEADERS += \
 	bgpd/bgp_open.h \
 	bgpd/bgp_packet.h \
 	bgpd/bgp_pbr.h \
-	bgpd/bgp_svc_constraint.h \
+	bgpd/bgp_svc_parameter.h \
 	bgpd/bgp_rd.h \
 	bgpd/bgp_regex.h \
 	bgpd/bgp_rpki.h \

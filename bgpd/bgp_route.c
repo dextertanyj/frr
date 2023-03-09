@@ -75,7 +75,7 @@
 #include "bgpd/bgp_orr.h"
 #include "bgpd/bgp_trace.h"
 #include "bgpd/bgp_rpki.h"
-#include "bgpd/bgp_svc_constraint.h"
+#include "bgpd/bgp_svc_parameter.h"
 
 #ifdef ENABLE_BGP_VNC
 #include "bgpd/rfapi/rfapi_backend.h"
@@ -985,21 +985,21 @@ static int bgp_path_info_cmp(struct bgp *bgp, struct bgp_path_info *new,
 	newattr = new->attr;
 	existattr = exist->attr;
 
-	/* 3.5. Service constraint check. */
-	int constraint_comparison = bgp_compare_service_constraints(bgp->service_constraint_settings, &(existattr->lcommunity), &(newattr->lcommunity));
-	if (constraint_comparison < 0) {
-		*reason = bgp_path_selection_svc_constraint;
+	/* 3.5. Service parameter check. */
+	int service_comparison = bgp_compare_service_parameters(bgp->service_parameter_settings, &(existattr->lcommunity), &(newattr->lcommunity));
+	if (service_comparison < 0) {
+		*reason = bgp_path_selection_svc_parameters;
 		if (debug)
 			zlog_debug(
-				"%s: %s wins over %s due to preferred service constraints",
+				"%s: %s wins over %s due to preferred service parameters",
 				pfx_buf, new_buf, exist_buf);
 		return 1;
 	}
-	if (constraint_comparison > 0) {
-		*reason = bgp_path_selection_svc_constraint;
+	if (service_comparison > 0) {
+		*reason = bgp_path_selection_svc_parameters;
 		if (debug)
 			zlog_debug(
-				"%s: %s wins over %s due to preferred service constraints",
+				"%s: %s wins over %s due to preferred service parameters",
 				pfx_buf, exist_buf, new_buf);
 		return 0;
 	}
@@ -4227,7 +4227,7 @@ int bgp_update(struct peer *peer, const struct prefix *p, uint32_t addpath_id,
 		goto filtered;
 	}
 
-	if (bgp_update_service_constraints(&(new_attr.lcommunity), peer->service_constraints)) {
+	if (bgp_update_service_parameters(&(new_attr.lcommunity), peer->service_parameters)) {
 		bgp_attr_set_lcommunity(&new_attr, NULL);
 	}
 
@@ -6196,8 +6196,8 @@ void bgp_static_update(struct bgp *bgp, const struct prefix *p,
 	attr.med = bgp_static->igpmetric;
 	attr.flag |= ATTR_FLAG_BIT(BGP_ATTR_MULTI_EXIT_DISC);
 
-	if (bgp->service_constraints) {
-		bgp_apply_service_constraints(&attr.lcommunity, bgp->service_constraints);
+	if (bgp->service_parameters) {
+		bgp_apply_service_parameters(&attr.lcommunity, bgp->service_parameters);
 	}
 
 	if (afi == AFI_IP)
@@ -9019,8 +9019,8 @@ const char *bgp_path_selection_reason2str(enum bgp_path_selection_reason reason)
 		return "Local Route";
 	case bgp_path_selection_aigp:
 		return "AIGP";
-	case bgp_path_selection_svc_constraint:
-		return "Service constraint";
+	case bgp_path_selection_svc_parameters:
+		return "Service parameters";
 	case bgp_path_selection_confed_as_path:
 		return "Confederation based AS Path";
 	case bgp_path_selection_as_path:
