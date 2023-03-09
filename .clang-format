@@ -4,6 +4,7 @@ Language: Cpp
 IndentWidth: 8
 UseTab: Always
 BreakBeforeBraces: Linux
+ColumnLimit: 120
 AlwaysBreakBeforeMultilineStrings: true
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false

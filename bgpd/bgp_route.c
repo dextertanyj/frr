@@ -4227,7 +4227,7 @@ int bgp_update(struct peer *peer, const struct prefix *p, uint32_t addpath_id,
 		goto filtered;
 	}
 
-	if (bgp_apply_service_constraints(&(new_attr.lcommunity), peer->service_constraints)) {
+	if (bgp_update_service_constraints(&(new_attr.lcommunity), peer->service_constraints)) {
 		bgp_attr_set_lcommunity(&new_attr, NULL);
 	}
 

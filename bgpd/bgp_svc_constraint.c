@@ -181,7 +181,21 @@ static struct lcommunity_val *search_svc_constraint_lcommunity_val(struct lcommu
 	return existing;
 }
 
-int bgp_apply_service_constraints(struct lcommunity **lcom, struct service_constraints *svc_constraints)
+void bgp_apply_service_constraints(struct lcommunity **lcom, struct service_constraints *svc_constraints)
+{
+	*lcom = lcommunity_new();
+	for (uint32_t type = BGP_SVC_CONSTRAINT_BASE + 1; type < BGP_SVC_CONSTRAINT_NONE; type++) {
+		if (!svc_constraints->constraints[type - BGP_SVC_CONSTRAINT_BASE - 1]) {
+			continue;
+		}
+		struct lcommunity_val *val = create_svc_constraint_lcommunity_val(
+			type, svc_constraints->constraints[type - BGP_SVC_CONSTRAINT_BASE - 1]);
+		lcommunity_add_val(*lcom, val);
+		lcommunity_val_free(val);
+	}
+}
+
+int bgp_update_service_constraints(struct lcommunity **lcom, struct service_constraints *svc_constraints)
 {
 	if (!(svc_constraints)) {
 		if (!(*lcom)) {
@@ -208,20 +222,6 @@ int bgp_apply_service_constraints(struct lcommunity **lcom, struct service_const
 			lcommunity_free(lcom);
 			*lcom = 0;
 			return 1;
-		}
-		return 0;
-	}
-
-	if (!(*lcom)) {
-		*lcom = lcommunity_new();
-		for (uint32_t type = BGP_SVC_CONSTRAINT_BASE + 1; type < BGP_SVC_CONSTRAINT_NONE; type++) {
-			if (!svc_constraints->constraints[type - BGP_SVC_CONSTRAINT_BASE - 1]) {
-				continue;
-			}
-			struct lcommunity_val *val = create_svc_constraint_lcommunity_val(
-				type, svc_constraints->constraints[type - BGP_SVC_CONSTRAINT_BASE - 1]);
-			lcommunity_add_val(*lcom, val);
-			lcommunity_val_free(val);
 		}
 		return 0;
 	}
