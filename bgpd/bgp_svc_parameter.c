@@ -44,9 +44,6 @@ enum comparison_algorithm bgp_parse_service_parameter_comparison_algorithm(const
 	if (!str) {
 		return -1;
 	}
-	if (strmatch(str, "all")) {
-		return BGP_SVC_PARAMETER_COMPUTE_TOTAL;
-	}
 	if (strmatch(str, "common")) {
 		return BGP_SVC_PARAMETER_COMPUTE_COMMON;
 	}
@@ -56,11 +53,9 @@ enum comparison_algorithm bgp_parse_service_parameter_comparison_algorithm(const
 	return -1;
 }
 
-const char *bgp_service_comparison_comparison_algorithm(enum comparison_algorithm algorithm)
+const char *bgp_service_comparison_algorithm(enum comparison_algorithm algorithm)
 {
 	switch (algorithm) {
-	case BGP_SVC_PARAMETER_COMPUTE_TOTAL:
-		return "all";
 	case BGP_SVC_PARAMETER_COMPUTE_COMMON:
 		return "common";
 	case BGP_SVC_PARAMETER_CONFIGURED_COUNT:
@@ -97,7 +92,7 @@ void bgp_configure_service_parameter_weights(struct bgp *bgp, enum parameter_typ
 }
 
 static void configure_service_parameter(struct service_parameters *svc_parameters, enum parameter_type type,
-					 uint32_t value)
+					uint32_t value)
 {
 	svc_parameters->parameters[type - BGP_SVC_PARAMETER_BASE - 1] = value;
 }
@@ -320,7 +315,7 @@ int (*COMPARE_FUNCTIONS[])(struct service_parameter_settings *, struct lcommunit
 };
 
 extern int bgp_compare_service_parameters(struct service_parameter_settings *settings, struct lcommunity **lcom1,
-					   struct lcommunity **lcom2)
+					  struct lcommunity **lcom2)
 {
 	if (!*lcom1 && !lcom2) {
 		return 0;

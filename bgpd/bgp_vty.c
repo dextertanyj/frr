@@ -4611,10 +4611,9 @@ DEFUN (neighbor_remote_as,
 
 DEFUN (bgp_set_service_parameter_comparison_algorithm,
 	   	 bgp_set_service_parameter_comparison_algorithm_cmd,
-	  	 "bgp service-parameter-algorithm <all|common|count>",
+	  	 "bgp service-parameter-algorithm <common|count>",
 	   	 BGP_STR
 	     "Set service parameter comparison algorithm for best path selection\n"
-	     "Compare routes based on weighted sum of all possible services\n"
 	     "Compare routes based on weighted sum of intersecting set of defined services\n"
 	     "Compare routes based on greatest number of defined services\n")
 {

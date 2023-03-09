@@ -6,7 +6,6 @@
 #define BGP_SVC_PARAMETER_PREFIX ((uint8_t)85)
 
 enum comparison_algorithm {
-	BGP_SVC_PARAMETER_COMPUTE_TOTAL,
 	BGP_SVC_PARAMETER_COMPUTE_COMMON,
 	BGP_SVC_PARAMETER_CONFIGURED_COUNT,
 };
@@ -20,7 +19,7 @@ enum parameter_type {
 
 extern enum parameter_type bgp_parse_service_parameter_type(const char *str);
 extern enum comparison_algorithm bgp_parse_service_parameter_comparison_algorithm(const char *str);
-extern const char *bgp_service_comparison_comparison_algorithm(enum comparison_algorithm);
+extern const char *bgp_service_comparison_algorithm(enum comparison_algorithm);
 
 struct service_parameter_settings {
 	char computation_algorithm;
