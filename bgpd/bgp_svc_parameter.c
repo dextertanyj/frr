@@ -178,6 +178,9 @@ static struct lcommunity_val *search_svc_parameter_lcommunity_val(struct lcommun
 
 void bgp_apply_service_parameters(struct lcommunity **lcom, struct service_parameters *svc_parameters)
 {
+	if (!(svc_parameters)) {
+		return;
+	}
 	*lcom = lcommunity_new();
 	for (uint32_t type = BGP_SVC_PARAMETER_BASE + 1; type < BGP_SVC_PARAMETER_NONE; type++) {
 		if (!svc_parameters->parameters[type - BGP_SVC_PARAMETER_BASE - 1]) {
@@ -192,10 +195,11 @@ void bgp_apply_service_parameters(struct lcommunity **lcom, struct service_param
 
 int bgp_update_service_parameters(struct lcommunity **lcom, struct service_parameters *svc_parameters)
 {
+	if (!(*lcom)) {
+		return 0;
+	}
+
 	if (!(svc_parameters)) {
-		if (!(*lcom)) {
-			return 0;
-		}
 
 		/* Alternatively, we can reject the route entirely if there are
 		 * service parameters present. */
