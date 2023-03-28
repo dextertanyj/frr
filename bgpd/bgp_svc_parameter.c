@@ -246,30 +246,6 @@ int bgp_update_service_parameters(struct lcommunity **lcom, struct service_param
 	return 0;
 }
 
-static int compare_algorithm_all(struct service_parameter_settings *settings, struct lcommunity *lcom1,
-				 struct lcommunity *lcom2)
-{
-	int64_t result = 0; // Possibly negative.
-
-	for (uint64_t type = BGP_SVC_PARAMETER_BASE + 1; type < BGP_SVC_PARAMETER_NONE; type++) {
-		int64_t local_result = 0;
-		struct lcommunity_val *existing = NULL;
-		size_t type_idx = type - BGP_SVC_PARAMETER_BASE - 1;
-		existing = search_svc_parameter_lcommunity_val(lcom1, type);
-		if (existing) {
-			local_result = (int64_t)extract_svc_parameter_val(existing);
-			lcommunity_val_free(existing);
-		}
-		existing = search_svc_parameter_lcommunity_val(lcom2, type);
-		if (existing) {
-			local_result -= (int64_t)extract_svc_parameter_val(existing);
-			lcommunity_val_free(existing);
-		}
-		result += local_result * (int64_t)settings->weights[type_idx] * COMPARISON_MULTIPLER[type_idx];
-	}
-	return result == 0 ? 0 : result > 0 ? 1 : -1;
-}
-
 static uint32_t compare_algorithm_common(struct service_parameter_settings *settings, struct lcommunity *lcom1,
 					 struct lcommunity *lcom2)
 {
@@ -309,11 +285,10 @@ static int compare_algorithm_count(struct service_parameter_settings *, struct l
 			lcommunity_val_free(existing);
 		}
 	}
-	return count1 == count2 ? 0 : count1 < count2 ? 1 : -1;
+	return count1 == count2 ? 0 : count1 > count2 ? 1 : -1;
 }
 
 int (*COMPARE_FUNCTIONS[])(struct service_parameter_settings *, struct lcommunity *, struct lcommunity *) = {
-	compare_algorithm_all,
 	compare_algorithm_common,
 	compare_algorithm_count,
 };
